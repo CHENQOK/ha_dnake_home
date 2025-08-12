@@ -28,14 +28,14 @@
 
 ```bash
 cd config
-git clone https://github.com/YangLang116/ha_dnake_home.git
+git clone https://github.com/CHENQOK/ha_dnake_home.git
 cd ha_dnake_home
 ./install.sh /config
 ```
 
 ### 方法 2: [HACS](https://hacs.xyz/)
 
-HACS > 右上角三个点 > Custom repositories > Repository: https://github.com/YangLang116/ha_dnake_home.git & Category or
+HACS > 右上角三个点 > Custom repositories > Repository: https://github.com/CHENQOK/ha_dnake_home.git & Category or
 Type:
 Integration > ADD > 点击 HACS 的 New 或 Available for download 分类下的 Dnake Home ，进入集成详情页  > DOWNLOAD
 
