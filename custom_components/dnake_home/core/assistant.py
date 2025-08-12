@@ -106,8 +106,11 @@ class Assistant(__AssistantCore):
 
     def read_all_dev_state(self):
         state_info = self.post({"action": Action.ReadAllDevState.value})
+        _LOGGER.error(f"read_all_dev_state response: {state_info}")
         if state_info:
-            return state_info.get("devList")
+            dev_list = state_info.get("devList")
+            _LOGGER.error(f"devList content: {dev_list}")
+            return dev_list
         else:
             _LOGGER.error("query all device status fail")
             return None

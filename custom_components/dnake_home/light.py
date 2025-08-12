@@ -22,6 +22,8 @@ def load_lights(device_list):
 
 def update_lights_state(states):
     lights = assistant.entries["light"]
+    if not states:
+        return
     for light in lights:
         state = next((state for state in states if light.is_hint_state(state)), None)
         if state:
