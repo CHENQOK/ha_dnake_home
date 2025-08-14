@@ -21,10 +21,10 @@ _LOGGER = logging.getLogger(__name__)
 
 _hvac_table = {
     HVACMode.OFF: 0,
-    HVACMode.HEAT: 1,
-    HVACMode.COOL: 2,
-    HVACMode.FAN_ONLY: 3,
-    HVACMode.DRY: 4,
+    HVACMode.HEAT: 4,
+    HVACMode.COOL: 3,
+    HVACMode.FAN_ONLY: 7,
+    HVACMode.DRY: 8,
 }
 
 _fan_table = {FAN_LOW: 0, FAN_MIDDLE: 1, FAN_HIGH: 2}
@@ -194,12 +194,12 @@ class DnakeClimate(ClimateEntity):
             self.async_write_ha_state()
 
     def update_state(self, state):
-        self._target_temperature = state.get("tempDesire", _min_temperature)
-        self._current_temperature = state.get("tempIndoor", _min_temperature)
-        self._fan_mode = get_key_by_value(_fan_table, state.get("speed"), FAN_LOW)
-        if state.get("powerOn", 0) == 0:
+        self._target_temperature = state.get("reports", {}).get("temp", _min_temperature)
+        self._current_temperature = state.get("reports", {}).get("tempIndoor", _min_temperature)
+        self._fan_mode = get_key_by_value(_fan_table, state.get("reports", {}).get("windSpeed"), FAN_LOW)
+        if state.get("reports", {}).get("powerOn", 0) == 0:
             self._hvac_mode = HVACMode.OFF
         else:
-            mode = state.get("mode")
+            mode = state.get("reports", {}).get("airMode")
             self._hvac_mode = get_key_by_value(_hvac_table, mode, HVACMode.OFF)
         self.async_write_ha_state()
