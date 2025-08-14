@@ -16,9 +16,9 @@ class Action(Enum):
 
 class Cmd(Enum):
     # 灯.etc
-    On = "on"
+    On = "On"
     # 灯.etc
-    Off = "off"
+    Off = "Off"
     # 窗帘.etc
     Stop = "stop"
     # 窗帘.etc
