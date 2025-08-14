@@ -26,6 +26,7 @@ def update_lights_state(states):
         return
     for light in lights:
         state = next((state for state in states if light.is_hint_state(state)), None)
+        _LOGGER.error(f"update_lights_state: {state}")
         if state:
             light.update_state(state)
 
