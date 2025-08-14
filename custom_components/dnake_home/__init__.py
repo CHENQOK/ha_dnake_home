@@ -43,6 +43,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # 初始化设备状态
             await _async_refresh_states()
+
+            _LOGGER.error(f"assistantlightlight: {assistant.entries["light"]}")
             # 定时刷新设备状态
             time_delta = timedelta(seconds=entry.data["scan_interval"])
             async_track_time_interval(hass, _async_refresh_states, time_delta)
