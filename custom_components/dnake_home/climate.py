@@ -135,8 +135,8 @@ class DnakeClimate(ClimateEntity):
 
     @property
     def temperature_unit(self):
-        _LOGGER.error(f"temperature_unit: {UnitOfTemperature}")
-        return UnitOfTemperature.CELSIUS
+        _LOGGER.error(f"temperature_unit: {UnitOfTemperature.CELSIUS}")
+        return 'TEMP_CELSIUS'
 
     @property
     def supported_features(self):
