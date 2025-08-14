@@ -75,7 +75,7 @@ class Assistant(__AssistantCore):
         iot_info = self.get("/smart/iot.info")
         if iot_info:
             return {
-                "iot_device_name": iot_info.get("iotDeviceName"),
+                "iot_device_name": iot_info.get("devIotName"),
                 "gw_iot_name": iot_info.get("gwIotName"),
             }
         else:
@@ -108,34 +108,55 @@ class Assistant(__AssistantCore):
             _LOGGER.error(f"query device status fail: devNo={dev_no},devCh={dev_ch}")
             return None
 
-    def read_all_dev_state(self, udid=None):
+    def read_all_dev_state(self, udid=0):
         """
-        Read all device states - matches JavaScript readAllDevState
+        Read all device states - matches web interface API
         
         Args:
-            udid: Optional device ID filter
+            udid: Device ID filter (default: 0 for all devices)
             
         Returns:
-            list: Device list with state information
+            list: Device list with state information, or None if failed
         """
         data = {
-            "action": Action.ReadAllDevState.value,
+            "action": "readDev",
             "fields": "state", 
             "scope": "all",
-            "index": 0
+            "index": 0,
+            "udid": udid
         }
-        if udid is not None:
-            data["udid"] = udid
         
         state_info = self.post(data)
         if state_info and state_info.get("result") == "ok":
             dev_list = state_info.get("devList", [])
-            if dev_list:  # Check if devList is not empty like JavaScript does
-                _LOGGER.debug(f"read_all_dev_state response: {len(dev_list)} devices")
-                return dev_list
-            else:
-                _LOGGER.warning("Device list is empty")
-                return []
+            page_no = state_info.get("pageNo", 1)
+            total_page = state_info.get("totalPage", 1)
+            
+            _LOGGER.debug(f"read_all_dev_state response: {len(dev_list)} devices (page {page_no}/{total_page})")
+            
+            # Process device states from reports field
+            processed_devices = []
+            for device in dev_list:
+                dev_no = device.get("devNo")
+                dev_ch = device.get("devCh") 
+                dev_type = device.get("devType")
+                reports = device.get("reports", {})
+                
+                # Create processed device entry
+                processed_device = {
+                    "devNo": dev_no,
+                    "devCh": dev_ch,
+                    "devType": dev_type,
+                    "reports": reports
+                }
+                
+                # Add configs if present
+                if "configs" in device:
+                    processed_device["configs"] = device["configs"]
+                    
+                processed_devices.append(processed_device)
+            _LOGGER.info(f"read_all_dev_state response: {len(processed_devices)} devices")
+            return processed_devices
         else:
             _LOGGER.error("query all device status fail")
             return None
