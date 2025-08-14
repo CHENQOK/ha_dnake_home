@@ -65,7 +65,9 @@ class __AssistantCore:
             return None
 
     def do_action(self, data: dict):
+        _LOGGER.error(f"post data: {data}")
         resp = self.post(data)
+        _LOGGER.error(f"post resp: {resp}")
         return resp and resp.get("result") == "ok"
 
 
