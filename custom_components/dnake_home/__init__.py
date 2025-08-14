@@ -19,10 +19,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     gateway_ip = entry.data["gateway_ip"]
     auth_username = entry.data["auth_username"]
     auth_password = entry.data["auth_password"]
-    scan_interval = entry.data.get("scan_interval", 10)
-    
-    _LOGGER.info(f"Setting up DNake Home integration with scan_interval: {scan_interval}s")
-    
     assistant.bind_auth_info(gateway_ip, auth_username, auth_password)
     iot_info = await hass.async_add_executor_job(assistant.query_iot_info)
     if iot_info:
@@ -35,46 +31,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             load_lights(device_list)
             load_covers(device_list)
             load_climates(device_list)
-            
-            _LOGGER.info(f"Loaded devices: {len(assistant.entries.get('light', []))} lights, "
-                        f"{len(assistant.entries.get('cover', []))} covers, "
-                        f"{len(assistant.entries.get('climate', []))} climates")
-            
             # 初始化各类设备
             await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
             async def _async_refresh_states(now=None):
-                """定时刷新所有设备状态"""
-                try:
-                    _LOGGER.debug("Starting device state refresh")
-                    states = await hass.async_add_executor_job(assistant.read_all_dev_state)
-                    
-                    if states:
-                        _LOGGER.debug(f"Received {len(states)} device states from gateway")
-                        update_lights_state(states)
-                        update_covers_state(states)
-                        update_climates_state(states)
-                        _LOGGER.debug("Device state refresh completed successfully")
-                    else:
-                        _LOGGER.warning("No device states received from gateway")
-                        
-                except Exception as e:
-                    _LOGGER.error(f"Error during device state refresh: {e}")
+                _LOGGER.info("update all device state")
+                states = await hass.async_add_executor_job(assistant.read_all_dev_state)
+                update_lights_state(states)
+                update_covers_state(states)
+                update_climates_state(states)
 
-            # 初始化设备状态 - 延迟执行确保组件完全加载
-            hass.async_create_task(_async_refresh_states())
-            
+            # 初始化设备状态
+            await _async_refresh_states()
+
+            _LOGGER.error(f"assistantlightlight: {assistant.entries["light"]}")
             # 定时刷新设备状态
-            time_delta = timedelta(seconds=scan_interval)
+            time_delta = timedelta(seconds=entry.data["scan_interval"])
             async_track_time_interval(hass, _async_refresh_states, time_delta)
-            
-            _LOGGER.info(f"DNake Home integration setup completed successfully")
             return True
         else:
-            _LOGGER.error("Failed to query device list")
+            _LOGGER.error("query_device_list fail")
             return False
     else:
-        _LOGGER.error("Failed to query IoT info")
+        _LOGGER.error("query_iot_info fail")
         return False
 
 
