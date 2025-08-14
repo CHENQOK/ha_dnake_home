@@ -16,7 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def load_lights(device_list):
     lights = [DnakeLight(device) for device in device_list if device.get("devType") == 256]
-    _LOGGER.info(f"find light num: {len(lights)}")
+    _LOGGER.error(f"find light num: {len(lights)}")
     assistant.entries["light"] = lights
 
 
@@ -50,6 +50,7 @@ class DnakeLight(LightEntity):
         self._is_on = False
 
     def is_hint_state(self, state):
+        _LOGGER.error(f"is_hint_state: {state}")
         return state.get("devNo") == self._dev_no and state.get("devCh") == self._dev_ch
 
     @property

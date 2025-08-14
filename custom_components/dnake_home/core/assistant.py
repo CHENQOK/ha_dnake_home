@@ -155,7 +155,6 @@ class Assistant(__AssistantCore):
                     processed_device["configs"] = device["configs"]
                     
                 processed_devices.append(processed_device)
-                _LOGGER.error(f"Processed device: {processed_device}")
             _LOGGER.error(f"read_all_dev_state response: {processed_devices} devices")
             return processed_devices
         else:
