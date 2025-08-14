@@ -106,4 +106,5 @@ class DnakeLight(LightEntity):
 
     def update_state(self, state):
         self._is_on = state.get("state", 0) == 1
+        _LOGGER.error(f"update_state: {self._is_on}")
         self.async_write_ha_state()
