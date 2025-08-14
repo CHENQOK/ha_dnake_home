@@ -9,7 +9,7 @@ class Action(Enum):
     # 获取单设备状态
     ReadDev = "readDev"
     # 获取所有设备状态
-    ReadAllDevState = "readAllDevState"
+    ReadAllDevState = "readDev"
     # 控制设备
     CtrlDev = "ctrlDev"
 

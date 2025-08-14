@@ -90,36 +90,209 @@ class Assistant(__AssistantCore):
             _LOGGER.error("query device info fail")
             return None
 
-    def read_dev_state(self, dev_no, dev_ch):
-        state_info = self.post(
-            {
-                "action": Action.ReadDev.value,
-                "devNo": dev_no,
-                "devCh": dev_ch,
-            }
-        )
+    def read_dev_state(self, dev_no, dev_ch, dev_type=None, code=None):
+        data = {
+            "action": Action.ReadDev.value,
+            "devNo": dev_no,
+            "devCh": dev_ch,
+        }
+        if dev_type is not None:
+            data["devType"] = dev_type
+        if code is not None and code != -1:
+            data["code"] = code
+            
+        state_info = self.post(data)
         if state_info:
             return state_info
         else:
             _LOGGER.error(f"query device status fail: devNo={dev_no},devCh={dev_ch}")
             return None
 
-    def read_all_dev_state(self):
-        state_info = self.post({"action": Action.ReadAllDevState.value})
-        _LOGGER.error(f"read_all_dev_state response: {state_info}")
-        if state_info:
-            dev_list = state_info.get("devList")
-            _LOGGER.error(f"devList content: {dev_list}")
-            return dev_list
+    def read_all_dev_state(self, udid=None):
+        """
+        Read all device states - matches JavaScript readAllDevState
+        
+        Args:
+            udid: Optional device ID filter
+            
+        Returns:
+            list: Device list with state information
+        """
+        data = {
+            "action": Action.ReadAllDevState.value,
+            "fields": "state", 
+            "scope": "all",
+            "index": 0
+        }
+        if udid is not None:
+            data["udid"] = udid
+        
+        state_info = self.post(data)
+        if state_info and state_info.get("result") == "ok":
+            dev_list = state_info.get("devList", [])
+            if dev_list:  # Check if devList is not empty like JavaScript does
+                _LOGGER.debug(f"read_all_dev_state response: {len(dev_list)} devices")
+                return dev_list
+            else:
+                _LOGGER.warning("Device list is empty")
+                return []
         else:
             _LOGGER.error("query all device status fail")
             return None
 
+    def read_all_dbus_devices(self):
+        """Read all device profiles from dbus - matches JavaScript readAllDbusDevices"""
+        data = {
+            "action": Action.ReadDev.value,
+            "fields": "profile",
+            "scope": "all", 
+            "index": 0
+        }
+        
+        profile_info = self.post(data)
+        if profile_info:
+            return profile_info.get("devList")
+        else:
+            _LOGGER.error("query all device profiles fail")
+            return None
+
+    def update_device_list(self, exclude_dev_types=None, max_retries=3):
+        """
+        Complete device list update matching JavaScript Updatedevicelist function
+        
+        Args:
+            exclude_dev_types: List of device types to exclude
+            max_retries: Maximum retry attempts
+            
+        Returns:
+            dict: Combined device information or None if failed
+        """
+        if exclude_dev_types is None:
+            exclude_dev_types = []
+            
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            # Step 1: Get device states
+            state_response = self.read_all_dev_state()
+            
+            if state_response:
+                _LOGGER.debug(f"Device states retrieved: {len(state_response) if state_response else 0} devices")
+                
+                # Filter devices by type
+                filtered_devices = []
+                device_map = {}  # For quick lookup by devNo.devCh
+                
+                for device in state_response:
+                    dev_type = device.get("devType")
+                    if dev_type and dev_type not in exclude_dev_types:
+                        filtered_devices.append(device)
+                        key = f"{device.get('devNo')}.{device.get('devCh')}"
+                        device_map[key] = device
+                
+                # Step 2: Get device profiles
+                profile_response = self.read_all_dbus_devices()
+                
+                if profile_response:
+                    _LOGGER.debug(f"Device profiles retrieved: {len(profile_response) if profile_response else 0} devices")
+                    
+                    # Step 3: Merge state and profile information
+                    merged_devices = {}
+                    
+                    for profile_device in profile_response:
+                        dev_no = profile_device.get("devNo")
+                        if dev_no in [d.get("devNo") for d in filtered_devices]:
+                            # Base device info from profile
+                            merged_device = {
+                                "devNo": dev_no,
+                                "uid": profile_device.get("ieeeAddr"),
+                                "modelId": profile_device.get("modleId"),  # Note: typo in original
+                                "hwVer": profile_device.get("hwVer"),
+                                "swVer": profile_device.get("swVer"),
+                                "addr": profile_device.get("addr"),
+                                "chList": {}
+                            }
+                            
+                            # Add bus info if available
+                            if profile_device.get("busNo"):
+                                merged_device["busNo"] = profile_device.get("busNo")
+                            if profile_device.get("busCh"):
+                                merged_device["busCh"] = profile_device.get("busCh")
+                            if profile_device.get("busType"):
+                                merged_device["busType"] = profile_device.get("busType")
+                            
+                            # Merge channel information
+                            profile_channels = profile_device.get("chList", [])
+                            for channel in profile_channels:
+                                dev_ch = channel.get("devCh")
+                                key = f"{dev_no}.{dev_ch}"
+                                
+                                if key in device_map:
+                                    # Merge state info with profile info
+                                    merged_channel = device_map[key].copy()
+                                    
+                                    # Add profile-specific info
+                                    if channel.get("productId"):
+                                        merged_channel["productId"] = channel.get("productId")
+                                    
+                                    # Add binding information
+                                    if channel.get("binds"):
+                                        merged_channel["binds"] = []
+                                        for bind in channel.get("binds", []):
+                                            bind_info = {
+                                                "devNo": bind.get("dstId"),
+                                                "devCh": bind.get("dstEp")
+                                            }
+                                            merged_channel["binds"].append(bind_info)
+                                    
+                                    merged_device["chList"][dev_ch] = merged_channel
+                            
+                            # Set device count
+                            merged_device["devCnt"] = len(merged_device["chList"])
+                            merged_devices[dev_no] = merged_device
+                    
+                    _LOGGER.info(f"Successfully updated device list: {len(merged_devices)} devices")
+                    return merged_devices
+                
+                else:
+                    _LOGGER.warning("Failed to get device profiles, using state info only")
+                    # Return state info only if profile fetch fails
+                    devices_by_no = {}
+                    for device in filtered_devices:
+                        dev_no = device.get("devNo")
+                        dev_ch = device.get("devCh")
+                        
+                        if dev_no not in devices_by_no:
+                            devices_by_no[dev_no] = {
+                                "devNo": dev_no,
+                                "chList": {},
+                                "devCnt": 0
+                            }
+                        
+                        devices_by_no[dev_no]["chList"][dev_ch] = device
+                        devices_by_no[dev_no]["devCnt"] = len(devices_by_no[dev_no]["chList"])
+                    
+                    return devices_by_no
+            
+            # Retry logic
+            retry_count += 1
+            if retry_count < max_retries:
+                _LOGGER.warning(f"Device list update failed, retrying ({retry_count}/{max_retries})")
+                import time
+                time.sleep(0.4)  # Match JavaScript 400ms delay
+        
+        _LOGGER.error(f"Failed to update device list after {max_retries} attempts")
+        return None
+
+    def ctrl_dev(self, data: dict):
+        """Generic device control method matching JavaScript ctrlDev"""
+        data["action"] = Action.CtrlDev.value
+        return self.do_action(data)
+
     def turn_to(self, dev_no, dev_ch, is_open: bool):
         cmd = Cmd.On if is_open else Cmd.Off
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": cmd.value,
                 "devNo": dev_no,
                 "devCh": dev_ch,
@@ -127,9 +300,8 @@ class Assistant(__AssistantCore):
         )
 
     def stop(self, dev_no, dev_ch):
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": Cmd.Stop.value,
                 "devNo": dev_no,
                 "devCh": dev_ch,
@@ -137,9 +309,8 @@ class Assistant(__AssistantCore):
         )
 
     def set_level(self, dev_no, dev_ch, level: int):
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": Cmd.Level.value,
                 "level": level,
                 "devNo": dev_no,
@@ -149,9 +320,8 @@ class Assistant(__AssistantCore):
 
     def set_air_condition_power(self, dev_no, dev_ch, is_open: bool):
         power = Power.On if is_open else Power.Off
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": Cmd.AirCondition.value,
                 "oper": power.value,
                 "devNo": dev_no,
@@ -160,9 +330,8 @@ class Assistant(__AssistantCore):
         )
 
     def set_air_condition_temperature(self, dev_no, dev_ch, temp: int):
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": Cmd.AirCondition.value,
                 "oper": "setTemp",
                 "param": temp,
@@ -172,9 +341,8 @@ class Assistant(__AssistantCore):
         )
 
     def set_air_condition_mode(self, dev_no, dev_ch, mode: int):
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": Cmd.AirCondition.value,
                 "oper": "setMode",
                 "param": mode,
@@ -184,9 +352,8 @@ class Assistant(__AssistantCore):
         )
 
     def set_air_condition_fan(self, dev_no, dev_ch, mode: int):
-        return self.do_action(
+        return self.ctrl_dev(
             {
-                "action": Action.CtrlDev.value,
                 "cmd": Cmd.AirCondition.value,
                 "oper": "setFlow",
                 "param": mode,
