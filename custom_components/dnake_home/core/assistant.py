@@ -353,6 +353,7 @@ class Assistant(__AssistantCore):
         )
 
     def set_air_condition_temperature(self, dev_no, dev_ch, temp: int):
+        _LOGGER.error(f"set_air_condition_temperature: {temp}")
         return self.ctrl_dev(
             {
                 "cmd": Cmd.AirCondition.value,
