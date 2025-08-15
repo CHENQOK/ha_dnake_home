@@ -194,8 +194,8 @@ class DnakeClimate(ClimateEntity):
             self.async_write_ha_state()
 
     def update_state(self, state):
-        self._target_temperature = state.get("reports", {}).get("temp", _min_temperature)
-        self._current_temperature = state.get("reports", {}).get("tempIndoor", _min_temperature)
+        self._target_temperature = state.get("reports", {}).get("temp", _min_temperature)/100
+        self._current_temperature = state.get("reports", {}).get("tempIndoor", _min_temperature)/100
         self._fan_mode = get_key_by_value(_fan_table, state.get("reports", {}).get("windSpeed"), FAN_LOW)
         if state.get("reports", {}).get("powerOn", 0) == 0:
             self._hvac_mode = HVACMode.OFF
