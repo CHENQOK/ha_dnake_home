@@ -16,7 +16,6 @@ _LOGGER = logging.getLogger(__name__)
 
 def load_lights(device_list):
     lights = [DnakeLight(device) for device in device_list if device.get("devType") == 256]
-    _LOGGER.error(f"find light num: {len(lights)}")
     assistant.entries["light"] = lights
 
 
@@ -26,7 +25,6 @@ def update_lights_state(states):
         return
     for light in lights:
         state = next((state for state in states if light.is_hint_state(state)), None)
-        _LOGGER.error(f"update_lights_state: {state}")
         if state:
             light.update_state(state)
 

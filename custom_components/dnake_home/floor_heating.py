@@ -1,9 +1,6 @@
 import logging
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.components.climate.const import (
     ClimateEntityFeature,
@@ -27,7 +24,7 @@ _max_temperature = 32
 
 def load_floor_heatings(device_list):
     climates = [
-        DnakeClimate(device) for device in device_list if device.get("devType") == 2048
+        DnakeFloorHeating(device) for device in device_list if device.get("devType") == 2048
     ]
     _LOGGER.info(f"find floor heating num: {len(climates)}")
     assistant.entries["floor_heating"] = climates
@@ -41,17 +38,8 @@ def update_floor_heatings_state(states):
             floor_heating.update_state(state)
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-):
-    floor_heating_list = assistant.entries["floor_heating"]
-    if floor_heating_list:
-        async_add_entities(floor_heating_list)
 
-
-class DnakeClimate(ClimateEntity):
+class DnakeFloorHeating(ClimateEntity):
 
     def __init__(self, device):
         self._name = device.get("devName")
@@ -67,12 +55,12 @@ class DnakeClimate(ClimateEntity):
 
     @property
     def unique_id(self):
-        return f"dnake_{self._dev_ch}_{self._dev_no}"
+        return f"dnake_floor_heating_{self._dev_ch}_{self._dev_no}"
 
     @property
     def device_info(self):
         return DeviceInfo(
-            identifiers={(DOMAIN, f"climate_{self._dev_ch}_{self._dev_no}")},
+            identifiers={(DOMAIN, f"floor_heating_{self._dev_ch}_{self._dev_no}")},
             name=self._name,
             manufacturer=MANUFACTURER,
             model="地暖控制",

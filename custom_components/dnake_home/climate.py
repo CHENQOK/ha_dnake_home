@@ -56,8 +56,16 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ):
     climate_list = assistant.entries["climate"]
+    floor_heating_list = assistant.entries["floor_heating"]
+    
+    entities = []
     if climate_list:
-        async_add_entities(climate_list)
+        entities.extend(climate_list)
+    if floor_heating_list:
+        entities.extend(floor_heating_list)
+    
+    if entities:
+        async_add_entities(entities)
 
 
 class DnakeClimate(ClimateEntity):
