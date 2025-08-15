@@ -24,9 +24,9 @@ class Cmd(Enum):
     # 窗帘.etc
     Level = "level"
     # 空调
-    AirCondition = "airCondition"
+    AirCondition = "AirCondition"
 
 
 class Power(Enum):
-    On = "powerOn"
-    Off = "powerOff"
+    On = 1
+    Off = 0

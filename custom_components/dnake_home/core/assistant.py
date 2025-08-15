@@ -346,7 +346,7 @@ class Assistant(__AssistantCore):
         return self.ctrl_dev(
             {
                 "cmd": Cmd.AirCondition.value,
-                "oper": power.value,
+                "powerOn": power.value,
                 "devNo": dev_no,
                 "devCh": dev_ch,
             }
@@ -356,8 +356,7 @@ class Assistant(__AssistantCore):
         return self.ctrl_dev(
             {
                 "cmd": Cmd.AirCondition.value,
-                "oper": "setTemp",
-                "param": temp,
+                "temp": temp,
                 "devNo": dev_no,
                 "devCh": dev_ch,
             }
@@ -367,8 +366,7 @@ class Assistant(__AssistantCore):
         return self.ctrl_dev(
             {
                 "cmd": Cmd.AirCondition.value,
-                "oper": "setMode",
-                "param": mode,
+                "airMode": mode,
                 "devNo": dev_no,
                 "devCh": dev_ch,
             }
@@ -378,8 +376,7 @@ class Assistant(__AssistantCore):
         return self.ctrl_dev(
             {
                 "cmd": Cmd.AirCondition.value,
-                "oper": "setFlow",
-                "param": mode,
+                "windSpeed": mode,
                 "devNo": dev_no,
                 "devCh": dev_ch,
             }

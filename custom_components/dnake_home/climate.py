@@ -27,7 +27,7 @@ _hvac_table = {
     HVACMode.DRY: 8,
 }
 
-_fan_table = {FAN_LOW: 0, FAN_MIDDLE: 1, FAN_HIGH: 2}
+_fan_table = {FAN_LOW: 1, FAN_MIDDLE: 2, FAN_HIGH: 3}
 
 _min_temperature = 16
 
