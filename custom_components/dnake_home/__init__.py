@@ -9,6 +9,7 @@ from .core.assistant import assistant
 from .cover import load_covers, update_covers_state
 from .light import load_lights, update_lights_state
 from .climate import load_climates, update_climates_state
+from .floor_heating import load_floor_heatings, update_floor_heatings_state
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             load_lights(device_list)
             load_covers(device_list)
             load_climates(device_list)
+            load_floor_heatings(device_list)
             # 初始化各类设备
             await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -40,6 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 update_lights_state(states)
                 update_covers_state(states)
                 update_climates_state(states)
+                update_floor_heatings_state(states)
 
             # 初始化设备状态
             await _async_refresh_states()
