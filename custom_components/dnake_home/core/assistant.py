@@ -357,7 +357,7 @@ class Assistant(__AssistantCore):
         return self.ctrl_dev(
             {
                 "cmd": Cmd.AirCondition.value,
-                "temp": temp,
+                "temp": temp*100,
                 "devNo": dev_no,
                 "devCh": dev_ch,
             }

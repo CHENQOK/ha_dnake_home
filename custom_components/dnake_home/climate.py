@@ -150,7 +150,7 @@ class DnakeClimate(ClimateEntity):
         )
 
     async def async_set_temperature(self, **kwargs):
-        temperature = kwargs.get("temperature")*100
+        temperature = kwargs.get("temperature")
         is_success = await self.hass.async_add_executor_job(
             assistant.set_air_condition_temperature,
             self._dev_no,
