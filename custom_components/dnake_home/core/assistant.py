@@ -384,4 +384,27 @@ class Assistant(__AssistantCore):
         )
 
 
+    def set_floor_heating_power(self, dev_no, dev_ch, is_open: bool):
+        power = Power.On if is_open else Power.Off
+        return self.ctrl_dev(
+            {
+                "cmd": Cmd.AirHeater.value,
+                "powerOn": power.value,
+                "devNo": dev_no,
+                "devCh": dev_ch,
+            }
+        )
+
+    def set_floor_heating_temperature(self, dev_no, dev_ch, temp: int):
+        _LOGGER.error(f"set_floor_heating_temperature: {temp}")
+        return self.ctrl_dev(
+            {
+                "cmd": Cmd.AirHeater.value,
+                "temp": temp*100,
+                "devNo": dev_no,
+                "devCh": dev_ch,
+            }
+        )
+
+
 assistant = Assistant()

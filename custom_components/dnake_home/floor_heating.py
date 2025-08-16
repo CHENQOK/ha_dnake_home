@@ -139,12 +139,11 @@ class DnakeFloorHeating(ClimateEntity):
                 self._hvac_mode = HVACMode.OFF
                 self.async_write_ha_state()
         else:
-            if self._hvac_mode == HVACMode.OFF:
-                open_success = await self._async_turn_to(True)
-                if not open_success:
-                    return
-            self._hvac_mode = hvac_mode
-            self.async_write_ha_state()
+            # 地暖开启后默认为加热模式
+            open_success = await self._async_turn_to(True)
+            if open_success:
+                self._hvac_mode = HVACMode.HEAT
+                self.async_write_ha_state()
 
 
     def update_state(self, state):

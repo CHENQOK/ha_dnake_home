@@ -25,6 +25,8 @@ class Cmd(Enum):
     Level = "level"
     # 空调
     AirCondition = "AirCondition"
+    # 地暖
+    AirHeater = "AirHeater"
 
 
 class Power(Enum):
