@@ -134,7 +134,6 @@ class Assistant(__AssistantCore):
             page_no = state_info.get("pageNo", 1)
             total_page = state_info.get("totalPage", 1)
             
-            _LOGGER.debug(f"read_all_dev_state response: {len(dev_list)} devices (page {page_no}/{total_page})")
             
             # Process device states from reports field
             processed_devices = []
