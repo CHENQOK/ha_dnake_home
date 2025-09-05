@@ -405,5 +405,26 @@ class Assistant(__AssistantCore):
             }
         )
 
+    def set_air_fresh_power(self, dev_no, dev_ch, is_open: bool):
+        power = Power.On if is_open else Power.Off
+        return self.ctrl_dev(
+            {
+                "cmd": Cmd.AirFresh.value,
+                "powerOn": power.value,
+                "devNo": dev_no,
+                "devCh": dev_ch,
+            }
+        )
+
+    def set_air_fresh_wind_speed(self, dev_no, dev_ch, wind_speed: int):
+        return self.ctrl_dev(
+            {
+                "cmd": Cmd.AirFresh.value,
+                "windSpeed": wind_speed,
+                "devNo": dev_no,
+                "devCh": dev_ch,
+            }
+        )
+
 
 assistant = Assistant()
